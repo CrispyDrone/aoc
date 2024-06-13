@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from sys import argv
 import re
 
-sum=0
 p = re.compile(r"(\d+)")
+
+input_file=argv[1] if len(argv) > 1 else "input.txt"
 
 def parse_next_number(index, line):
     # get index and number in the line, returns -1 if we can move on to the next line
@@ -55,45 +57,212 @@ def find_surrounding_symbol(number_tuple, buffer):
 
     return False
 
-with open("input.txt") as input:
+def part_one():
 
-    buffer=[],[],[]
-    numbers_queue=[]
+    sum=0
 
-    # TODO: Rewrite this with a queue instead of this for loop? Also, how to use "next" on an iterator?
-
-    for line in input:
-
-        print(line)
-
-        buffer = buffer[1], buffer[2], line
-
+    with open(input_file) as input:
+    
+        buffer=[],[],[]
+        numbers_queue=[]
+    
+        # TODO: Rewrite this with a queue instead of this for loop? Also, how to use "next" on an iterator?
+    
+        for line in input:
+    
+            print(line)
+    
+            buffer = buffer[1], buffer[2], line
+    
+            for n in numbers_queue:
+                if find_surrounding_symbol(n, buffer): 
+                    #print(f"adding {int(n[1])}")
+                    sum+= int(n[1])
+    
+            numbers_queue.clear()
+    
+            index = 0
+    
+            while True:
+    
+                #index, number = parse_next_number(index + (0 if number == None else len(number)), line)
+                index, number = parse_next_number(index, line)
+    
+                if index < 0: 
+                    break
+    
+                #print(f"found number {number}")
+                numbers_queue.append((index, number))
+                index += len(number)
+    
+        buffer = buffer[1], buffer[2], []
+    
         for n in numbers_queue:
             if find_surrounding_symbol(n, buffer): 
                 #print(f"adding {int(n[1])}")
                 sum+= int(n[1])
+    
+    print(sum)
 
-        numbers_queue.clear()
+from collections import deque
+import functools
 
-        index = 0
+def find_number_at_index(index, line):
 
-        while True:
+    if index < 0 or index > len(line) - 1:
+        return None, None
 
-            #index, number = parse_next_number(index + (0 if number == None else len(number)), line)
-            index, number = parse_next_number(index, line)
+    if not line[index].isdigit(): return None, None
 
-            if index < 0: 
-                break
+    start = index + 1
+    end = index - 1
 
-            #print(f"found number {number}")
-            numbers_queue.append((index, number))
-            index += len(number)
+    while line[start - 1].isdigit(): start -= 1
+    while line[end + 1].isdigit(): end += 1
 
-    buffer = buffer[1], buffer[2], []
+    number = line[start:end + 1]
+    # print(start, end, number)
 
-    for n in numbers_queue:
-        if find_surrounding_symbol(n, buffer): 
-            #print(f"adding {int(n[1])}")
-            sum+= int(n[1])
+    return end, int(number)
 
-print(sum)
+def find_surrounding_numbers(index, buffer):
+
+    #print(f"finding numbers for {index}")
+
+    # no current line yet
+    if not len(buffer[1]): return []
+
+    numbers = []
+
+    # ugh, I hate this code!
+
+    if len(buffer[0]):
+
+        search = True
+        search_index = index - 1
+
+        while search:
+
+            end, n = find_number_at_index(search_index, buffer[0])
+
+            if n: 
+                numbers.append(n)
+                search_index = end + 2
+            else:
+                search_index += 1
+
+            search = search_index <= index + 1
+
+        #end, n = find_number_at_index(index - 1, buffer[0])
+
+        #if n: 
+        #    #print(f'{n} ending at {end}')
+        #    numbers.append(n)
+
+        #if not end or end < index:
+        #    end, n = find_number_at_index(index + 1, buffer[0])
+        #    if n: 
+        #        #print(f'{n} ending at {end}')
+        #        numbers.append(n)
+
+    end, n = find_number_at_index(index - 1 , buffer[1])
+    if n: 
+        #print(f'{n} ending at {end}')
+        numbers.append(n)
+
+    end, n = find_number_at_index(index + 1 , buffer[1])
+
+    if n: 
+        #print(f'{n} ending at {end}')
+        numbers.append(n)
+
+    if len(buffer[2]):
+
+        #end, n = find_number_at_index(index - 1, buffer[2])
+        #if n: 
+        #    #print(f'{n} ending at {end}')
+        #    numbers.append(n)
+
+        #if not end or end < index:
+        #    end, n = find_number_at_index(index + 1, buffer[2])
+        #    if n: 
+        #        #print(f'{n} ending at {end}')
+        #        numbers.append(n)
+        search = True
+        search_index = index - 1
+
+        while search:
+
+            end, n = find_number_at_index(search_index, buffer[2])
+
+            if n: 
+                numbers.append(n)
+                search_index = end + 2
+            else:
+                search_index += 1
+
+            search = search_index <= index + 1
+
+    if len(numbers) == 2:
+        product = numbers[0] * numbers[1]
+        print(f"found {numbers} with product {product}")
+        return numbers
+    else:
+        return []
+    #return numbers if len(numbers) == 2 else []
+
+def part_two():
+
+    #queue = deque(["hello", "there", "general", "kenobi"])
+
+    #while queue:
+    #    value = queue.popleft()
+    #    print(value)
+
+    sum=0
+
+    with open(input_file) as input:
+    
+        buffer=[],[],[]
+        star_queue=[]
+    
+        # TODO: Rewrite this with a queue instead of this for loop? Also, how to use "next" on an iterator?
+    
+        for line in input:
+    
+            #print(line)
+    
+            buffer = buffer[1], buffer[2], line
+    
+            for s in star_queue:
+                numbers = find_surrounding_numbers(s, buffer)
+                if numbers: sum += functools.reduce(lambda x, y: int(x)*int(y), numbers)
+    
+            star_queue.clear()
+
+            star_index = 0
+    
+            while True:
+    
+                star_index = line.find('*', star_index)
+
+                if star_index < 0: 
+                    break
+    
+                #print(f"found * at {star_index}")
+
+                star_queue.append(star_index)
+
+                star_index += 1
+    
+        buffer = buffer[1], buffer[2], []
+    
+        for s in star_queue:
+            numbers = find_surrounding_numbers(s, buffer)
+            if numbers: sum += functools.reduce(lambda x, y: x*y, numbers)
+    
+    print(sum)
+
+# part_one()
+part_two()
+
