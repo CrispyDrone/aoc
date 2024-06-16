@@ -29,5 +29,15 @@ class Tests(unittest.TestCase):
 
                 self.assertEqual(result, expected_result)
 
+    def test_increment(self):
+
+        l = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+        main.increment_list(l, start=3, length=5, increment=1)
+
+        expected_result = [ 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 ]
+
+        self.assertEqual(l, expected_result)
+
 if __name__ == '__main__':
     unittest.main()

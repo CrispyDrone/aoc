@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from sys import argv
+import functools
 
 #def parse_literal():
 
@@ -16,8 +17,7 @@ def extract_numbers(input):
 
     return list(map(int, numbers_one)), list(map(int, numbers_two))
 
-def calculate_points(numbers):
-
+def count_matches(numbers):
     # number of matches in numbers[0] and numbers[1] -> 2^(#matches - 1)
 
     # I'm assuming that duplicates count
@@ -29,22 +29,72 @@ def calculate_points(numbers):
     for n in numbers[1]:
         if n in winning_numbers: matches+=1
 
+    return matches
+
+def calculate_points(numbers):
+
+    matches = count_matches(numbers)
+
     return 0 if matches == 0 else pow(2, matches - 1)
 
-sum = 0
+def increment(iterable, start, length, increment):
 
-with open(input_file) as file:
+    for i in range(start, start + length):
+        if iterable.get(i):
+            iterable[i]+=increment
+        else:
+            iterable[i]=increment
 
-    for line in file:
+def part_one():
 
-        numbers = extract_numbers(line)
-        result = calculate_points(numbers)
+    sum = 0
 
-        print(line)
-        print(numbers)
-        print(result)
+    with open(input_file) as file:
+    
+        for line in file:
+    
+            numbers = extract_numbers(line)
+            result = calculate_points(numbers)
+    
+            print(line)
+            print(numbers)
+            print(result)
+    
+            sum += result
+    
+        print(f"total is: {sum}")
 
-        sum+= result
+# let's first just do it with a dictionary, and then you can use an array limited to max number of matches
+def part_two():
 
-    print(f"total is: {sum}")
+    card_number = 1
+    cards = {}
 
+    with open(input_file) as file:
+
+        for line in file:
+
+            numbers = extract_numbers(line)
+            matches = count_matches(numbers)
+
+            print(line)
+            print(matches)
+
+            if cards.get(card_number): 
+                cards[card_number]+=1
+            else:
+                cards[card_number]=1
+
+            increment(cards, card_number + 1, matches, cards[card_number])
+            print(cards)
+            card_number+=1
+
+        sum = functools.reduce(lambda x, y: x + y, cards.values())
+
+        print(f"total number of scratch cards is: {sum}") # Answer: 9496801
+
+def part_two_array():
+    pass()
+
+part_one()
+part_two()
